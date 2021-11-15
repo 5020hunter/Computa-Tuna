@@ -1,0 +1,1 @@
+#takes dominant frequency from FFT and returns a note name/octave

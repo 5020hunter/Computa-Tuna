@@ -17,5 +17,5 @@ for i in range(0,72):
     scaling = 440*(math.pow(math.pow(2,1/12),i-57)) #logarithmic spacing between note in reference to A4 with frequency 440Hz
     tolerance = 5 #Hz above/below we consider in tune
     if scaling - tolerance <= max_x <= scaling + tolerance:
-        note, octave = (note_dict[i%12],i//12) #note is some value mod12, octave is what multiple of 12 notes we are on
+        note, octave = (note_dict[i%12],i//12) #note is some value mod-12, octave is what multiple of 12 notes we are on
         print(note, octave)

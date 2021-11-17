@@ -64,10 +64,11 @@ def playback_audio(audio_file):
     # Read data in chunks
     data = wf.readframes(chunk)
     # Play the sound by writing the audio data to the stream
-    while data != '':
+    while data:
         stream.write(data)
         data = wf.readframes(chunk)
     # Close and terminate the stream
+    stream.stop_stream()
     stream.close()
     p.terminate()
 
@@ -81,15 +82,16 @@ def plot_audio_array(samplerate, data):
     length = data.shape[0] / samplerate
     time = np.linspace(0, length, data.shape[0])
     #plotting the audio wave, showing amplitude over time
+    plt.subplot(2,1,1)
     plt.plot(time, data[:], label="Audio Wave")
     plt.legend()
     plt.xlabel("Time [s]")
     plt.ylabel("Amplitude")
-    plt.show()
     n = len(data)
     yf = np.fft.fft(data)
     xf = np.linspace(0, samplerate//2, n//2)
     #plotting the magnitudes(occurrences) of frequencies 0-1000Hz from our audio
+    plt.subplot(2,1,2)
     plt.plot(xf, 2.0/n * np.abs(yf[:n//2]))
     plt.xlim(0,1000) #0-1000Hz is the typical range for human speech
     plt.grid()
@@ -113,15 +115,15 @@ def note_recognition(frequency):
         if scaling - tolerance <= frequency <= scaling + tolerance:
             note, octave = (note_dict[i%12],i//12) #note is some value mod-12, octave is what multiple of 12 notes we are on
             print(note, octave)
-
+            break
 def user_menu():
     seconds = float(input("How many seconds would you like to record? "))
     filename = input("What would you like to name the file? ")
     filename = filename + ".wav"
     record_audio(seconds, filename)
-    #answer = input("Would you like to playback your audio (y/n)? ")
-    #if answer.lower() == "y":
-    #    playback_audio(filename)
+    answer = input("Would you like to playback your audio (y/n)? ")
+    if answer.lower() == "y":
+        playback_audio(filename)
     samplerate, data = convert_audio_to_array(filename)
     plot_audio_array(samplerate, data)
     frequency = dominant_frequency(samplerate, data)

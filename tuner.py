@@ -116,6 +116,7 @@ def note_recognition(frequency):
             note, octave = (note_dict[i%12],i//12) #note is some value mod-12, octave is what multiple of 12 notes we are on
             print(note, octave)
             break
+
 def user_menu():
     seconds = float(input("How many seconds would you like to record? "))
     filename = input("What would you like to name the file? ")

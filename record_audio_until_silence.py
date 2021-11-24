@@ -14,7 +14,7 @@ CHANNELS = 1
 RATE = 16000
 swidth = 2
 
-TIMEOUT_LENGTH = 2
+TIMEOUT_LENGTH = 5
 
 f_name_directory = r'C:\Users\5020h\github-classroom\FHU\Computa-Tuna'
 
@@ -26,7 +26,7 @@ class Recorder:
         format = "%dh" % (count)
         shorts = struct.unpack(format, frame)
 
-        sum_squares = 0.0
+        sum_squares = 0.0 
         for sample in shorts:
             n = sample * SHORT_NORMALIZE
             sum_squares += n * n
@@ -52,8 +52,9 @@ class Recorder:
         while current <= end:
 
             data = self.stream.read(chunk)
-            if self.rms(data) >= Threshold: end = time.time() + TIMEOUT_LENGTH
-
+            if self.rms(data) >= Threshold: 
+                end = time.time() + TIMEOUT_LENGTH
+                
             current = time.time()
             rec.append(data)
         self.write(b''.join(rec))
@@ -69,8 +70,7 @@ class Recorder:
         wf.setframerate(RATE)
         wf.writeframes(recording)
         wf.close()
-        print('Written to file: {}'.format(filename))
-        print('Returning to listening')
+        print(f'Written to file: {filename}')
 
 
 
@@ -81,6 +81,7 @@ class Recorder:
             rms_val = self.rms(input)
             if rms_val > Threshold:
                 self.record()
+                break
 
 a = Recorder()
 

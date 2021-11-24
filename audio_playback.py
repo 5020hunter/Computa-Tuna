@@ -28,5 +28,6 @@ while data != '':
     data = wf.readframes(chunk)
 
 # Close and terminate the stream
+stream.stop_stream()
 stream.close()
 p.terminate()

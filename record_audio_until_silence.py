@@ -14,7 +14,7 @@ CHANNELS = 1
 RATE = 16000
 swidth = 2
 
-TIMEOUT_LENGTH = 5
+TIMEOUT_LENGTH = 1
 
 f_name_directory = r'C:\Users\5020h\github-classroom\FHU\Computa-Tuna'
 
@@ -71,6 +71,7 @@ class Recorder:
         wf.writeframes(recording)
         wf.close()
         print(f'Written to file: {filename}')
+        return filename
 
 
 

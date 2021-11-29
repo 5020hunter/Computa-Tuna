@@ -1,52 +1,17 @@
 from os.path import dirname, join as pjoin
 import matplotlib.pyplot as plt
-import numpy as np
+from numpy import abs, fft, linspace, argmax
 from scipy.io import wavfile
-import math
+from math import pow
 import pyaudio
 import wave
-import time
+from record_audio_until_silence import Recorder
 
-def record_audio(seconds, filename):
-    chunk = 1024  # Record in chunks of 1024 samples
-    sample_format = pyaudio.paInt16  # 16 bits per sample
-    channels = 1
-    fs = 16000  # Record at 16000 samples per second
-    seconds = seconds
-    filename = filename
-    p = pyaudio.PyAudio()  # Create an interface to PortAudio
-    print("3")
-    time.sleep(1)
-    print("2")
-    time.sleep(1)
-    print("1")
-    time.sleep(1)
-    print('Recording')
-    stream = p.open(format=sample_format,
-                    channels=channels,
-                    rate=fs,
-                    frames_per_buffer=chunk,
-                    input=True)
-    frames = []  # Initialize array to store frames
-    # Store data in chunks for 3 seconds
-    for frame in range(0, int(fs / chunk * seconds)):
-        data = stream.read(chunk)
-        frames.append(data)
-        frame+=1
-    # Stop and close the stream 
-    stream.stop_stream()
-    stream.close()
-    # Terminate the PortAudio interface
-    p.terminate()
-    print('Finished Recording')
-    # Save the recorded data as a WAV file
-    wf = wave.open(filename, 'wb')
-    wf.setnchannels(channels)
-    wf.setsampwidth(p.get_sample_size(sample_format))
-    wf.setframerate(fs)
-    wf.writeframes(b''.join(frames))
-    wf.close()
-
+def record_audio():
+    a = Recorder()
+    file = a.listen()
+    return file
+    
 def playback_audio(audio_file):
     filename = audio_file
     # Set chunk size of 1024 samples per data frame
@@ -80,7 +45,7 @@ def convert_audio_to_array(audio_file):
 
 def plot_audio_array(samplerate, data):
     length = data.shape[0] / samplerate
-    time = np.linspace(0, length, data.shape[0])
+    time = linspace(0, length, data.shape[0])
     #plotting the audio wave, showing amplitude over time
     plt.subplot(2,1,1)
     plt.plot(time, data[:], label="Audio Wave")
@@ -88,11 +53,11 @@ def plot_audio_array(samplerate, data):
     plt.xlabel("Time [s]")
     plt.ylabel("Amplitude")
     n = len(data)
-    yf = np.fft.fft(data)
-    xf = np.linspace(0, samplerate//2, n//2)
+    yf = fft.fft(data)
+    xf = linspace(0, samplerate//2, n//2)
     #plotting the magnitudes(occurrences) of frequencies 0-1000Hz from our audio
     plt.subplot(2,1,2)
-    plt.plot(xf, 2.0/n * np.abs(yf[:n//2]))
+    plt.plot(xf, 2.0/n * abs(yf[:n//2]))
     plt.xlim(0,1000) #0-1000Hz is the typical range for human speech
     plt.grid()
     plt.xlabel("Frequency [Hz]")
@@ -101,16 +66,16 @@ def plot_audio_array(samplerate, data):
 
 def dominant_frequency(samplerate, data):
     n = len(data)
-    yf = np.fft.fft(data)
-    xf = np.linspace(0, samplerate//2, n//2)
-    max_y = np.argmax(2.0/n * np.abs(yf[:n//2])) #find maximum value from the set of y-values we plotted earlier
+    yf = fft.fft(data)
+    xf = linspace(0, samplerate//2, n//2)
+    max_y = argmax(2.0/n * abs(yf[:n//2])) #find maximum value from the set of y-values we plotted earlier
     max_x = xf[max_y] #find the x-value associated with the maximum y-value
     return max_x
 
 def note_recognition(frequency):
     for i in range(0,72):
         note_dict = {0:"C",1:"C#/Db",2:"D",3:"D#/Eb",4:"E",5:"F",6:"F#/Gb",7:"G",8:"G#/Ab",9:"A",10:"A#/Bb",11:"B"}
-        scaling = 440*(math.pow(math.pow(2,1/12),i-57)) #logarithmic spacing between note in reference to A4 with frequency 440Hz
+        scaling = 440*(pow(pow(2,1/12),i-57)) #logarithmic spacing between note in reference to A4 with frequency 440Hz
         tolerance = 5 #Hz above/below we consider in tune
         if scaling - tolerance <= frequency <= scaling + tolerance:
             note, octave = (note_dict[i%12],i//12) #note is some value mod-12, octave is what multiple of 12 notes we are on
@@ -118,10 +83,7 @@ def note_recognition(frequency):
             break
 
 def user_menu():
-    seconds = float(input("How many seconds would you like to record? "))
-    filename = input("What would you like to name the file? ")
-    filename = filename + ".wav"
-    record_audio(seconds, filename)
+    filename = record_audio()
     answer = input("Would you like to playback your audio (y/n)? ")
     if answer.lower() == "y":
         playback_audio(filename)

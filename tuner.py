@@ -145,7 +145,7 @@ def note_recognition(frequency):
         tolerance = 5 #Hz above/below we consider in tune
         if scaling - tolerance <= frequency <= scaling + tolerance:
             note, octave = (note_dict[i%12],i//12) #note is some value mod-12, octave is what multiple of 12 notes we are on
-            print(note, octave)
+            print(f"{note} {octave} {frequency:.2f}Hz")
             break
 
 def user_menu():

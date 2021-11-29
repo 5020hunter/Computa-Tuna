@@ -3,19 +3,85 @@ import matplotlib.pyplot as plt
 from numpy import abs, fft, linspace, argmax
 from scipy.io import wavfile
 from math import pow
+from struct import unpack
+from time import time
 import pyaudio
 import wave
-from record_audio_until_silence import Recorder
+import os
 
-def record_audio():
-    a = Recorder()
-    file = a.listen()
-    return file
-    
-def playback_audio(audio_file):
-    filename = audio_file
-    # Set chunk size of 1024 samples per data frame
-    chunk = 1024  
+Threshold = 10
+SHORT_NORMALIZE = (1.0/32768.0)
+chunk = 1024
+FORMAT = pyaudio.paInt16
+CHANNELS = 1
+RATE = 16000
+swidth = 2
+TIMEOUT_LENGTH = 1
+f_name_directory = r'C:\Users\5020h\github-classroom\FHU\Computa-Tuna'
+
+p = pyaudio.PyAudio()
+stream = p.open(format=FORMAT,
+                channels=CHANNELS,
+                rate=RATE,
+                input=True,
+                output=True,
+                frames_per_buffer=chunk)
+
+def rms(frame):
+    count = len(frame) / swidth
+    format = "%dh" % (count)
+    shorts = unpack(format, frame)
+
+    sum_squares = 0.0 
+    for sample in shorts:
+        n = sample * SHORT_NORMALIZE
+        sum_squares += n * n
+    rms = pow(sum_squares / count, 0.5)
+
+    return rms * 1000
+
+def listen():
+    print('Listening beginning')
+    while True:
+        input = stream.read(chunk)
+        rms_val = rms(input)
+        if rms_val > Threshold:
+            filename = record()
+            break
+    return filename
+
+def record():
+    print('Noise detected, recording beginning')
+    rec = []
+    current = time()
+    end = time() + TIMEOUT_LENGTH
+
+    while current <= end:
+
+        data = stream.read(chunk)
+        if rms(data) >= Threshold: 
+            end = time() + TIMEOUT_LENGTH
+            
+        current = time()
+        rec.append(data)
+    filename = write(b''.join(rec))
+    return filename
+
+def write(recording):
+    n_files = len(os.listdir(f_name_directory))
+
+    filename = os.path.join(f_name_directory, f'{n_files}.wav')
+
+    wf = wave.open(filename, 'wb')
+    wf.setnchannels(CHANNELS)
+    wf.setsampwidth(p.get_sample_size(FORMAT))
+    wf.setframerate(RATE)
+    wf.writeframes(recording)
+    wf.close()
+    print(f'Written to file: {filename}')
+    return filename
+
+def playback(filename): 
     # Open the sound file 
     wf = wave.open(filename, 'rb')
     # Create an interface to PortAudio
@@ -83,11 +149,11 @@ def note_recognition(frequency):
             break
 
 def user_menu():
-    filename = record_audio()
+    audio_file = listen()
     answer = input("Would you like to playback your audio (y/n)? ")
     if answer.lower() == "y":
-        playback_audio(filename)
-    samplerate, data = convert_audio_to_array(filename)
+        playback(audio_file)
+    samplerate, data = convert_audio_to_array(audio_file)
     plot_audio_array(samplerate, data)
     frequency = dominant_frequency(samplerate, data)
     note_recognition(frequency)

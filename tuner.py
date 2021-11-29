@@ -143,7 +143,8 @@ def note_recognition(frequency):
     for i in range(0,72):
         note_dict = {0:"C",1:"C#/Db",2:"D",3:"D#/Eb",4:"E",5:"F",6:"F#/Gb",7:"G",8:"G#/Ab",9:"A",10:"A#/Bb",11:"B"}
         scaling = 440*(pow(pow(2,1/12),i-57)) #logarithmic spacing between note in reference to A4 with frequency 440Hz
-        tolerance = 15.17 #average Hz difference between adjacent notes
+        scaling_2 = 440*(pow(pow(2,1/12),i-56))
+        tolerance = abs(scaling - scaling_2)/2
         if scaling - tolerance <= frequency <= scaling + tolerance:
             note, octave = (note_dict[i%12],i//12) #note is some value mod-12, octave is what multiple of 12 notes we are on
             if scaling - tolerance/5 <= frequency <= scaling + tolerance/5:

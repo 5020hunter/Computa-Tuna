@@ -128,6 +128,7 @@ def plot_audio_array(samplerate, data):
     plt.grid()
     plt.xlabel("Frequency [Hz]")
     plt.ylabel("Magnitude")
+    plt.tight_layout()
     plt.show()
 
 def dominant_frequency(samplerate, data):

@@ -78,7 +78,6 @@ def write(recording):
     wf.setframerate(RATE)
     wf.writeframes(recording)
     wf.close()
-    print(f'Written to file: {filename}')
     return filename
 
 def playback(filename): 
@@ -104,15 +103,15 @@ def playback(filename):
     p.terminate()
 
 def convert_audio_to_array(audio_file):
-    data_dir = pjoin(dirname(audio_file),) #finding our file "output.wav" 
+    data_dir = pjoin(dirname(audio_file),) # finding our file 
     wav_fname = pjoin(data_dir, audio_file)
-    samplerate, data = wavfile.read(wav_fname) #taking our wav file and turning it into a list of pairs of amplitudes and times
+    samplerate, data = wavfile.read(wav_fname) # taking our wav file and turning it into a list of pairs of amplitudes and times
     return samplerate, data
 
 def plot_audio_array(samplerate, data):
     length = data.shape[0] / samplerate
     time = linspace(0, length, data.shape[0])
-    #plotting the audio wave, showing amplitude over time
+    # plotting the audio wave, showing amplitude over time
     plt.subplot(2,1,1)
     plt.plot(time, data[:], label="Audio Wave")
     plt.legend()
@@ -121,10 +120,10 @@ def plot_audio_array(samplerate, data):
     n = len(data)
     yf = fft.fft(data)
     xf = linspace(0, samplerate//2, n//2)
-    #plotting the magnitudes(occurrences) of frequencies 0-1000Hz from our audio
+    # plotting the magnitudes(occurrences) of frequencies 0-1000Hz from our audio
     plt.subplot(2,1,2)
     plt.plot(xf, 2.0/n * abs(yf[:n//2]))
-    plt.xlim(0,1000) #0-1000Hz is the typical range for human speech
+    plt.xlim(0,1000) # 0-1000Hz is the typical range for human speech
     plt.grid()
     plt.xlabel("Frequency [Hz]")
     plt.ylabel("Magnitude")
@@ -135,40 +134,48 @@ def dominant_frequency(samplerate, data):
     n = len(data)
     yf = fft.fft(data)
     xf = linspace(0, samplerate//2, n//2)
-    max_y = argmax(2.0/n * abs(yf[:n//2])) #find maximum value from the set of y-values we plotted earlier
-    max_x = xf[max_y] #find the x-value associated with the maximum y-value
+    max_y = argmax(2.0/n * abs(yf[:n//2])) # find maximum value from the set of y-values we plotted earlier
+    max_x = xf[max_y] # find the x-value associated with the maximum y-value
     return max_x
 
 def note_recognition(frequency):
     for i in range(0,72):
         note_dict = {0:"C",1:"C#/Db",2:"D",3:"D#/Eb",4:"E",5:"F",6:"F#/Gb",7:"G",8:"G#/Ab",9:"A",10:"A#/Bb",11:"B"}
-        scaling = 440*(pow(pow(2,1/12),i-57)) #logarithmic spacing between note in reference to A4 with frequency 440Hz
+        scaling = 440*(pow(pow(2,1/12),i-57)) # logarithmic spacing between note in reference to A4 with frequency 440Hz
         scaling_2 = 440*(pow(pow(2,1/12),i-56))
-        tolerance = abs(scaling - scaling_2)/2
-        if scaling - tolerance <= frequency <= scaling + tolerance:
-            note, octave = (note_dict[i%12],i//12) #note is some value mod-12, octave is what multiple of 12 notes we are on
-            if scaling - tolerance/5 <= frequency <= scaling + tolerance/5:
-                print(f"{note} {octave} {frequency:.2f}Hz \nIn tune!")
+        tolerance = abs(scaling - scaling_2)/100
+        if scaling - 50*tolerance <= frequency <= scaling + 50*tolerance:
+            note, octave = (note_dict[i%12],i//12) # note is some value mod-12, octave is what multiple of 12 notes we are on
+            if scaling - 10*tolerance <= frequency <= scaling + 10*tolerance:
+                print(f"\n{note} {octave} {frequency:.2f}Hz \nIn tune!")
             elif scaling < frequency:
-                print(f"{note} {octave} {frequency:.2f}Hz \nYou were sharp by {frequency-scaling:.2f}Hz")
+                cent_diff = abs(frequency-scaling)/tolerance
+                print(f"\n{note} {octave} {frequency:.2f} Hz \nYou were sharp by {cent_diff:.2f} cents")
             elif scaling > frequency:
-                print(f"{note} {octave} {frequency:.2f}Hz \nYou were flat by {frequency-scaling:.2f}Hz")
+                cent_diff = abs(frequency-scaling)/tolerance
+                print(f"\n{note} {octave} {frequency:.2f} Hz \nYou were flat by {cent_diff:.2f} cents")
             break
 
 def user_menu():
     audio_file = listen()
-    answer = input("Would you like to playback your audio (y/n)? ")
-    if answer.lower() == "y":
-        playback(audio_file)
     samplerate, data = convert_audio_to_array(audio_file)
-    plot_audio_array(samplerate, data)
     frequency = dominant_frequency(samplerate, data)
     note_recognition(frequency)
-    recall = input("Would you like to tune again (y/n)? ")
-    if recall.lower() == "y":
-        user_menu()
-    else:
-        print("Stay in Tune!")
+    while True:
+        answer = input('''\nWhat would you like to do?
+    0.) Tune Again
+    1.) Playback Audio
+    2.) Plot Audio
+    3.) Quit''')
+        if answer == "0":
+            user_menu()
+        elif answer == "1":
+            playback(audio_file)
+        elif answer == "2":
+            plot_audio_array(samplerate, data)
+        elif answer == "3":
+            print("Stay in Tune!!")
+            break
 
 if __name__ == "__main__":
     user_menu()
